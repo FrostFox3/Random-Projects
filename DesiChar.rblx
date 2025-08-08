@@ -1,0 +1,172 @@
+--!native
+local DesiChar = {__type="DesiChar"}
+DesiChar.__index=DesiChar
+
+local Char_INDEX:string = {
+	'0','1','2','3','4','5','6','7','8','9', --10
+	'a','b','c','d','e','f','g','h','i','j','k','l','m', 
+	'n','o','p','q','r','s','t','u','v','w','x','y','z', --24
+	'A','B','C','D','E','F','G','H','I','J','K','L','M',
+	'N','O','P','Q','R','S','T','U','V','W','X','Y','Z', --24
+	'!','@','#','%','&','(',')','~','`','_','[',']','{',
+	'}','|',';',':',',','.','<','>','?','ƒ','…','†','‡', --24
+	'+','-','*','/','=','^', -- 6
+}
+DesiChar.Char_INDEX=Char_INDEX
+local Ranges:{{number}}={
+	[0]={8384,8385,8386,8387,8388,8389,8390,8391,8392,8393,8394,8395,8396,8397,8398,8399,888,889,896,897,898,899,907,909,930}; -- blocked ranges
+	[1]={8352,8399}; -- Currency
+	[2]={880,1023}; -- Greek
+	[3]={5792,5872}; -- Runic
+	--[[
+	[4]={125184,125279}; -- Adlam
+	[5]={1424,1524}; -- Hebrew
+	[6]={5024,5117}; -- Cherokee
+	[7]={8592,8703}; -- Arrows
+	[8]={9632,9727}; -- Geometric_Shapes
+	[9]={9984,10175}; -- Ding_Bats
+	[10]={128512,128591}; -- Emoticons
+	[11]={128640,128767}; -- Transport_&_Map_Symbols
+	[12]={128768,128895}; -- Alchemical_Symbols
+	]]
+}
+
+local C:number=0
+local INDEX_MAX:number = #Char_INDEX
+local ram:any
+task.desynchronize()
+for index:string,range:{number} in ipairs(Ranges) do
+	if index>0 then -- index 0 is banned ranges
+		--warn(index.." [->] "..range[1].."/"..range[2])
+		for i:number=range[1],range[2] do -- iterate ranges
+			if not table.find(Ranges[0],i) then
+				ram=utf8.char(i)
+				--warn(i.." || "..ram)
+				if tostring(ram) then
+					if not table.find(Char_INDEX,ram) then
+						INDEX_MAX+=1
+						Char_INDEX[INDEX_MAX]=ram
+						warn(INDEX_MAX.." | "..ram)
+					end
+				end
+			end
+			C+=1
+			if C>=64 then
+				task.wait()
+				C=0
+				--warn(_I.."/"..374)
+			end
+		end
+		task.wait()
+	end
+end
+print(#Char_INDEX)
+task.wait()
+--[[task.synchronize()
+for i:number,v:string in ipairs(Char_INDEX) do
+	--print(i.." || "..v)
+	C+=1
+	if C>=256 then
+		task.wait()
+		C=0
+	end
+	INDEX_MAX+=1
+end]]
+
+function DesiChar.new(number:number)
+	if typeof(number)=="number" then
+		local i:number=1
+		local List:{number}={}
+		number+=1
+		while true do
+			if number<INDEX_MAX then
+				List[i]=Char_INDEX[number]
+				break
+			else
+				number-=INDEX_MAX
+				List[i]=Char_INDEX[INDEX_MAX]
+				i+=1
+			end
+		end
+		local self = {number=table.concat(List,'')}
+		return setmetatable(self,DesiChar)
+	elseif not number then
+		local self = {number="0"}
+		return setmetatable(self,DesiChar)
+	else
+		error("INPUT IS NOT TYPEOF number")
+	end
+end
+DesiChar.Max_Range=INDEX_MAX
+function DesiChar:__add(b:DesiChar):DesiChar
+	if not b.__type or not b then
+		warn("SYNTAX ERROR : you dident put a 2nt DesiChar number")
+	end
+	warn(self.number)
+	warn(b.number)
+	local list:{string}=string.split(self.number,'')
+	b=string.split(b.number,'')
+	
+	local max:number = #b
+	
+	local j:number=1
+	local i:number=1
+	local n:number=0
+	
+	while i>max do
+		if n<=0 then
+			n=table.find(Char_INDEX,b[i])
+			if list[j] then
+				n+=table.find(Char_INDEX,list[j])
+			end
+			i+=1
+		end
+		if n>=INDEX_MAX then
+			list[j]=Char_INDEX[INDEX_MAX]
+			n-=INDEX_MAX
+			j+=1
+		elseif n>0 then
+			list[j]=Char_INDEX[n]
+			warn(Char_INDEX[n])
+			warn(list[j])
+		end
+	end
+	self.number=table.concat(list,'')
+	return self
+end
+function DesiChar.ADD (self,b)
+	if not b.__type or not b then
+		warn("SYNTAX ERROR : you dident put a 2nt DesiChar number")
+	end
+	local list:{string}=string.split(self.number,'')
+	b=string.split(b.number,'')
+
+	local max:number = #b
+
+	local j:number=1
+	local i:number=1
+	local n:number=0
+
+	while i>max do
+		if n<=0 then
+			n=table.find(Char_INDEX,b[i])
+			if list[j] then
+				n+=table.find(Char_INDEX,list[j])
+			end
+			i+=1
+		end
+		if n>=INDEX_MAX then
+			list[j]=Char_INDEX[INDEX_MAX]
+			n-=INDEX_MAX
+			j+=1
+		elseif n>0 then
+			list[j]=Char_INDEX[n]
+			warn(Char_INDEX[n])
+			warn(list[j])
+		end
+	end
+	self.number=table.concat(list,'')
+	return self
+end
+
+return DesiChar
