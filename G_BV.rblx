@@ -1,0 +1,65 @@
+local s = os.clock()
+local cube = Instance.new("Part")
+cube.Anchored = true
+cube.Size = Vector3.one*1
+cube.CastShadow = false
+
+local noise = require(game.ServerStorage.NoiseModule)
+local seed:vector = noise.hash32_33_(vector.create(os.clock(),os.time(),tick()),0xFFFF)
+local size:number = 16
+local c:number=0
+local list:{{{number}}} = {}
+for x=1,size,1 do
+	if not list[x] then
+		list[x]={}
+	end
+	for y=1,size,1 do
+		if not list[x][y] then
+			list[x][y]={}
+		end
+		for z=1,size,1 do
+			if not list[x][y][z] then
+				list[x][y][z]=noise.simplex(vector.create(x,y,z)/size,seed)*.5+noise.simplex(vector.create(x,y,z)/size*.5,seed)*.25+noise.simplex(vector.create(x,y,z)/size*.25,seed)*.125
+				list[x][y][z]=list[x][y][z]<=0 and 0 or 1
+			end
+		end
+	end
+end
+
+for x=2,size,1 do
+	for y=2,size,1 do
+		c+=1
+		if c>=256 then
+			task.wait()
+			c=0
+		end
+		for z=2,size,1 do
+			list[x][y][z]*=(x*list[x-1][y][z]+y*list[x][y-1][z]+z*list[x][y][z-1])/(x+y+z)
+		end
+	end
+end
+
+local new:Part
+local new_gui
+for x,ylist in pairs(list) do
+	for y,zlist in pairs(ylist) do
+		for z,n in pairs(zlist) do
+			c+=1
+			if c>=256 then
+				task.wait()
+				c=0
+			end
+			new=cube:Clone()
+			new.Position = Vector3.new(x,y,z)*5
+			new.Color = Color3.fromHSV(0.166667, 1, 1):Lerp(Color3.fromHSV(0.666667, 1, 1),math.abs(1-n))
+			--new_gui=script.SurfaceGui:Clone()
+			--new_gui.TextLabel.Text=math.floor(n*100)*.01
+			--if n<=.5 then
+			--	new_gui.TextLabel.TextColor3=Color3.new(1, 1, 1)
+			--end
+			--new_gui.Parent=new
+			new.Parent = workspace.Cubes
+		end
+	end
+end
+print(os.difftime(os.clock(),s))
