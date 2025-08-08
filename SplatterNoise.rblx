@@ -1,0 +1,87 @@
+--!native
+
+local RL = require(game.ReplicatedStorage.RandomLibary)
+
+local Part = Instance.new("Part")
+Part.Transparency = 0
+Part.Color = Color3.new(0,0,0)
+Part.Size = Vector3.one*5
+Part.CanCollide = false
+Part.CanTouch = false
+Part.CanQuery = false
+Part.Material = Enum.Material.Slate
+Part.Anchored = true
+
+local floor = math.floor
+local v3f = vector.floor
+
+local NoiseModule = require(game.ServerStorage.NoiseModule)
+local Seed:number = NoiseModule.hash32_11_(os.clock()+os.time(),0xFFFF)
+--SplatterNoise
+local SplatterNoise = function(pos:vector,count:number,range:number,size:number):number
+	pos=v3f(pos/size)*size
+	local c = {}
+	local C = {}
+	local p:vector
+	local a:number
+	--size=range*2^size
+	for x:number=-range,range,size do
+		for y:number=-range,range,size do
+			for z:number=-range,range,size do
+				p=vector.create(x,y,z)
+				if (p.x*p.x+p.y*p.y+p.z*p.z)<=range then
+					a = floor(NoiseModule.hash32_31_(pos+p,0xFFFFFFFF)/0xFFFFFFFF*count)
+					if table.find(c,a) then
+						C[table.find(c,a)]+=1
+					else
+						c[#c+1]=a
+						C[#c]=1
+					end
+				end
+			end
+		end
+	end
+	local b = 1
+	for i,v in ipairs(C) do
+		if v>C[b] then
+			b=i
+		end
+	end
+	return c[b]/count
+end
+
+local zero = 0
+local one = 1
+local six = 6
+local one5 = 15
+local one0 = 10
+
+local Size = 32
+local pos:vector
+local r0:number
+local New:Part
+
+local F:number,A:number=4,.5
+
+local c = 0
+for x=-Size/2,Size/2 do
+	for y=-Size/2,Size/2 do
+		for z=-Size/2,Size/2 do
+			c+=1
+			if c>=16 then
+				task.wait()
+				c=0
+			end
+			pos = vector.create(x,y,z)
+			
+			r0 = SplatterNoise(pos+vector.one*Seed,10,24,1)
+			
+			if r0>=.3 then
+				New = Part:Clone()
+				New.Position = pos*5
+				New.Color = Color3.fromHSV(r0,1,1)
+				New.Parent = workspace.Cubes
+			end
+		end
+	end
+end
